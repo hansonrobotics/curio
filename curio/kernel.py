@@ -277,7 +277,12 @@ class Kernel(object):
 
         # Create a new task. Putting it on the ready queue
         def new_task(coro):
-            task = taskcls(coro)
+            # Children should be created with parent context if any
+            nonlocal current
+            try:
+                task = current._context.run(taskcls, coro)
+            except AttributeError:
+                task = taskcls(coro)
             tasks[task.id] = task
             reschedule_task(task)
             for a in _activations:
